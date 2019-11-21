@@ -45,7 +45,7 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
 setup(name='docassemble.novopkg',
       version='0.0.1',
       description=('A docassemble extension.'),
-      long_description='# docassemble.novopkg\n\nA docassemble extension.\n\n## Author\n\nRoberto Novaes, roberto.novaes@silexsistemas.com.br\n\n',
+      long_description='# docassemble.novopkg\r\n\r\nA docassemble extension.\r\n\r\n## Author\r\n\r\nRoberto Novaes, roberto.novaes@silexsistemas.com.br\r\n\r\n',
       long_description_content_type='text/markdown',
       author='Roberto Novaes',
       author_email='roberto.novaes@silexsistemas.com.br',
