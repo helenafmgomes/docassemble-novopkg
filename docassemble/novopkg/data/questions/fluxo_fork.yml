@@ -1,4 +1,4 @@
-question: Hello, world!
+question: Hello, world nova!
 buttons:
   - Exit: exit
 mandatory: True
