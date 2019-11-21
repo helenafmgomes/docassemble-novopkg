@@ -1,0 +1,918 @@
+metadata:
+  title: Acordo de Confidencialidade - NDA
+---
+features:
+  navigation: horizontal
+  progress bar: True
+  question back button: True
+  javascript: 
+    - jquery-3.min.js
+    - jquery.js
+---
+sections:
+  - Parte Receptora
+  - Parte Reveladora
+  - Cláusulas
+  - Assinatura
+  - Conclusão
+---
+mandatory: True
+code: |
+  menu_items = [ action_menu_item('Roteiro', 'road_map') ]
+comment: |
+  Criação do Roadmap.
+---
+initial: True
+code: |
+  if returning_user(minutes=0.1):
+    welcome_back
+comment: |
+  Retornar a entrevista, do momento em que parou.
+---
+event: welcome_back
+question: |
+  Bem vindo novamente!
+subquestion: |
+  Você está atualmente na sessão
+  **${ nav.get_section(display=True) }**
+  .
+  ${ nav }
+  Pressione "Continuar" para retomar
+buttons:
+  Continuar: continue
+---
+event: road_map
+question: |
+  Roteiro
+subquestion: |
+  Você está atualmente na sessão
+  **${ nav.get_section(display=True) }**
+  .
+  ${ nav }
+  Pressione "Continuar" para retomar.
+buttons:
+  Continuar: continue
+---
+objects:
+  - receptor: |
+      DAList.using(
+        object_type=Individual,
+        ask_number=True,
+        complete_attribute='complete')
+---
+section: Parte Receptora
+progress: 30
+question: |
+  Número de receptores das informações confidenciais
+fields:
+  - Número: receptor.target_number
+    datatype: integer
+    default: 1
+    min: 1
+right: |
+  ###Receptor
+  é a parte que receberá informações confidenciais e de propriedade exclusiva da parte reveladora. 
+---
+code: |
+  receptor[i].name.first
+  receptor[i].address.address
+  receptor[i].complete = True
+---
+question: |
+  Dados do(a) ${ word(ordinal(i)) } receptor das informações confidenciais
+fields:
+  - "Tipo:": receptor[i].person_type
+    datatype: radio
+    choices:
+      - Pessoa Física: individual
+      - Pessoa Jurídica: organization
+  - "Nome completo:": receptor[i].name.first
+    show if: 
+      variable: receptor[i].person_type
+      is: individual
+  - "CPF:": receptor[i].cpf
+    show if: 
+      variable: receptor[i].person_type
+      is: individual
+  - "Número do RG:": receptor[i].rg
+    show if: 
+      variable: receptor[i].person_type
+      is: individual
+  - "Nacionalidade:": receptor[i].nationality
+    default: brasileiro(a)
+    show if: 
+      variable: receptor[i].person_type
+      is: individual
+  - "Estado civil:": receptor[i].marital_status
+    choices:
+      - solteiro(a): single
+      - casado(a): married
+      - divorciado(a): divorced
+      - viúvo(a): widower
+    datatype: radio
+    show if: 
+      variable: receptor[i].person_type
+      is: individual
+  - "Razão social:": receptor[i].name.first
+    show if: 
+      variable: receptor[i].person_type
+      is: organization  
+  - "CNPJ:": receptor[i].cnpj
+    show if: 
+      variable: receptor[i].person_type
+      is: organization
+script: |
+  <script type="text/javascript">
+    $(document).ready(function(){
+        $('#X2ZpZWxkXzI').mask('000.000.000-00', {reverse: true});
+        $('#X2ZpZWxkXzc').mask('00.000.000/0000-00', {reverse: true});
+      });
+  </script>
+---
+question: |
+  Endereço do(a) ${ receptor[i] }
+fields:
+  - "CEP:": receptor[i].addres_postal_code
+    required: True
+  - "Logradouro:": receptor[i].address.address
+    required: True
+  - "Número:": receptor[i].address_street_number
+    required: True
+  - "Complemento:": receptor[i].address_complement
+    required: False
+  - "Bairro:": receptor[i].address_neighborhood
+    required: True
+  - "Cidade:": receptor[i].address_city
+    required: True
+  - "Estado:": receptor[i].address_state
+    required: True
+    code: state_list
+script: |
+  <script type="text/javascript">
+    $(document).ready(function(){
+        $('#cmVjZXB0b3JbaV0uYWRkcmVzX3Bvc3RhbF9jb2Rl').mask('00000-000');
+        
+        $("#cmVjZXB0b3JbaV0uYWRkcmVzX3Bvc3RhbF9jb2Rl").focusout(function(){
+          var cep = $("#cmVjZXB0b3JbaV0uYWRkcmVzX3Bvc3RhbF9jb2Rl").val();
+          cep = cep.replace ("-","");
+          var urlStr = "https://viacep.com.br/ws/"+ cep +"/json/";
+          $.ajax({
+            url: urlStr,
+            type: "get",
+            dataType: "json",
+            success: function(data){
+              console.log(data);
+              $("#cmVjZXB0b3JbaV0uYWRkcmVzcy5hZGRyZXNz").val(data.logradouro);
+              $("#cmVjZXB0b3JbaV0uYWRkcmVzc19uZWlnaGJvcmhvb2Q").val(data.bairro);
+              $("#cmVjZXB0b3JbaV0uYWRkcmVzc19jaXR5").val(data.localidade);
+              $("#cmVjZXB0b3JbaV0uYWRkcmVzc19zdGF0ZQ").val(data.uf);
+            },
+            error: function(erro){
+              console.log(erro);
+            }
+          });
+        });
+      });
+  </script>
+---
+mandatory: True
+question: |
+  Partes Receptoras
+subquestion: |
+  % for i in receptor:
+  * ${ i }
+  % endfor
+buttons:
+  Continue: continue
+---
+objects:
+  - revealing: |
+      DAList.using(
+        object_type=Individual,
+        ask_number=True,
+        complete_attribute='complete')
+---
+section: Parte Reveladora
+progress: 30
+question: |
+  Número de reveladores das informações confidenciais
+fields:
+  - Número: revealing.target_number
+    datatype: integer
+    default: 1
+    min: 1
+right: |
+  ###Revelador
+  é a parte que fornece informações confidenciais exclusivas para a parte receptora. 
+---
+code: |
+  revealing[i].name.first
+  revealing[i].address.address
+  revealing[i].complete = True
+---
+question: |
+  Dados do(a) ${ word(ordinal(i)) } revelador das informações confidenciais
+fields:
+  - "Tipo:": revealing[i].person_type
+    datatype: radio
+    choices:
+      - Pessoa Física: individual
+      - Pessoa Jurídica: organization
+  - "Nome completo:": revealing[i].name.first
+    show if: 
+      variable: revealing[i].person_type
+      is: individual
+  - "CPF:": revealing[i].cpf
+    show if: 
+      variable: revealing[i].person_type
+      is: individual
+  - "Número do RG:": revealing[i].rg
+    show if: 
+      variable: revealing[i].person_type
+      is: individual
+  - "Nacionalidade:": revealing[i].nationality
+    default: brasileiro(a)
+    show if: 
+      variable: revealing[i].person_type
+      is: individual
+  - "Estado civil:": revealing[i].marital_status
+    choices:
+      - solteiro(a): single
+      - casado(a): married
+      - divorciado(a): divorced
+      - viúvo(a): widower
+    datatype: radio
+    show if: 
+      variable: revealing[i].person_type
+      is: individual
+  - "Razão social:": revealing[i].name.first
+    show if: 
+      variable: revealing[i].person_type
+      is: organization  
+  - "CNPJ:": revealing[i].cnpj
+    show if: 
+      variable: revealing[i].person_type
+      is: organization
+script: |
+  <script type="text/javascript">
+    $(document).ready(function(){
+        $('#X2ZpZWxkXzI').mask('000.000.000-00', {reverse: true});
+        $('#X2ZpZWxkXzc').mask('00.000.000/0000-00', {reverse: true});
+      });
+  </script>
+---
+question: |
+  Endereço do(a) ${ revealing[i] }
+fields:
+  - "CEP:": revealing[i].addres_postal_code
+    required: True
+  - "Logradouro:": revealing[i].address.address
+    required: True
+  - "Número:": revealing[i].address_street_number
+    required: True
+  - "Complemento:": revealing[i].address_complement
+    required: False
+  - "Bairro:": revealing[i].address_neighborhood
+    required: True
+  - "Cidade:": revealing[i].address_city
+    required: True
+  - "Estado:": revealing[i].address_state
+    required: True
+    code: state_list
+script: |
+  <script type="text/javascript">
+    $(document).ready(function(){
+        $('#cmV2ZWFsaW5nW2ldLmFkZHJlc19wb3N0YWxfY29kZQ').mask('00000-000');
+        
+        $("#cmV2ZWFsaW5nW2ldLmFkZHJlc19wb3N0YWxfY29kZQ").focusout(function(){
+          var cep = $("#cmV2ZWFsaW5nW2ldLmFkZHJlc19wb3N0YWxfY29kZQ").val();
+          cep = cep.replace ("-","");
+          var urlStr = "https://viacep.com.br/ws/"+ cep +"/json/";
+          $.ajax({
+            url: urlStr,
+            type: "get",
+            dataType: "json",
+            success: function(data){
+              console.log(data);
+              $("#cmV2ZWFsaW5nW2ldLmFkZHJlc3MuYWRkcmVzcw").val(data.logradouro);
+              $("#cmV2ZWFsaW5nW2ldLmFkZHJlc3NfbmVpZ2hib3Job29k").val(data.bairro);
+              $("#cmV2ZWFsaW5nW2ldLmFkZHJlc3NfY2l0eQ").val(data.localidade);
+              $("#cmV2ZWFsaW5nW2ldLmFkZHJlc3Nfc3RhdGU").val(data.uf);
+            },
+            error: function(erro){
+              console.log(erro);
+            }
+          });
+        });
+      });
+  </script>
+---
+mandatory: True
+question: |
+  Partes Reveladoras
+subquestion: |
+  % for i in revealing:
+  * ${ i }
+  % endfor
+buttons:
+  Continue: continue
+---
+code: |
+  from num2words import num2words
+  years_agreement_in_words = num2words(years_agreement, lang='pt_BR')
+---
+mandatory: True
+progress: 70
+section: Cláusulas
+question: |
+  Prazo do Acordo
+fields:
+  - "Prazo da confidencialidade:": years_agreement
+    datatype: integer
+    default: 02
+    note: ano(s)
+  - "Deseja estender o período de confiencialidade após o vencimento do contrato?": extend_agreement
+    datatype: radio
+    default: não
+    choices:
+      - Sim: sim
+      - Não: não
+  - "Tempo de extensão da confidencialidade:": extend_years_agreement
+    datatype: integer
+    default: 01
+    note: ano(s)
+    show if: 
+      variable: extend_agreement
+      is: sim
+---
+code: |
+  from num2words import num2words
+  extend_years_agreement_in_words = num2words(extend_years_agreement, lang='pt_BR')
+---
+mandatory: True
+progress: 70
+section: Cláusulas
+question: |
+  Eleição do Foro
+subquestion: |
+  As partes elegem o foro do Estado de [FIELD comarca_state], comarca [FIELD comarcas_city], como único legítimo a resolver quaisquer dúvidas erigidas deste Acordo, excluindo quaisquer outros. 
+fields:
+  - "Estado:": comarca_state
+    code: stateuf_list
+  - "Comarcas:": comarcas_city
+    datatype: text
+---
+mandatory: True
+progress: 70
+section: Assinatura
+question: |
+  Assinatura
+fields:
+  - "Local:": signature_local
+  - "Data:": signature_date
+    datatype: date
+--- 
+section: Conclusão
+progress: 100
+mandatory: True
+question: |
+  Aqui está o seu documento.
+sets: provide_user_with_document
+attachment:
+  name: Acordo de Confidencialidade - NDA
+  language: pt
+  filename: acordo-de-confidencialidade-nda
+  valid formats:
+    - pdf
+    - docx
+    - rtf
+  metadata:
+      SingleSpacing: True
+      fontsize: 10pt
+    description: A document with a **classic** message
+    content: |
+      [BOLDCENTER] ACORDO DE CONFIDENCIALIDADE
+      % for item in receptor:
+        % if item.person_type  == 'organization':
+      { item.name | upper }, pessoa jurídica de direito privado, com sede no endereço { title_case(item.address.address) }, nº { title_case(item.address_street_number) }, { title_case(item.address_neighborhood) }, na cidade de { title_case(item.address_city) }, Estado de { title_case(item.address_state) }, inscrita no CNPJ/MF sob o nº { item.cnpj }, neste ato devidamente representada por seu representante legal, doravante denominada “Parte Receptora”.
+        % elif item.person_type  == 'individual':
+      { item.name | upper }, { item.nationality | lower }, { 'item.marital_status' | lower}, inscrito(a) no CPF sob nº. { item.cpf }, portador da cédula de identidade RG nº {item.rg}, residente e domiciliado no endereço {title_case(item.address.address)}, {item.address_street_number}, % if item.address_complement: { title_case(item.address_complement) }, % endif {item.address_neighborhood}, {title_case(item.address_city)}/{item.address_state | upper}, CEP: {item.addres_postal_code}, doravante denominada “Parte Receptora”. % endif 
+      % endfor
+      metadata:
+  title: Acordo de Confidencialidade - NDA
+---
+features:
+  navigation: horizontal
+  progress bar: True
+  question back button: True
+  javascript: 
+    - jquery-3.min.js
+    - jquery.js
+---
+sections:
+  - Parte Receptora
+  - Parte Reveladora
+  - Cláusulas
+  - Assinatura
+  - Conclusão
+---
+mandatory: True
+code: |
+  menu_items = [ action_menu_item('Roteiro', 'road_map') ]
+comment: |
+  Criação do Roadmap.
+---
+initial: True
+code: |
+  if returning_user(minutes=0.1):
+    welcome_back
+comment: |
+  Retornar a entrevista, do momento em que parou.
+---
+event: welcome_back
+question: |
+  Bem vindo novamente!
+subquestion: |
+  Você está atualmente na sessão
+  **${ nav.get_section(display=True) }**
+  .
+  ${ nav }
+  Pressione "Continuar" para retomar
+buttons:
+  Continuar: continue
+---
+event: road_map
+question: |
+  Roteiro
+subquestion: |
+  Você está atualmente na sessão
+  **${ nav.get_section(display=True) }**
+  .
+  ${ nav }
+  Pressione "Continuar" para retomar.
+buttons:
+  Continuar: continue
+---
+objects:
+  - receptor: |
+      DAList.using(
+        object_type=Individual,
+        ask_number=True,
+        complete_attribute='complete')
+---
+section: Parte Receptora
+progress: 30
+question: |
+  Número de receptores das informações confidenciais
+fields:
+  - Número: receptor.target_number
+    datatype: integer
+    default: 1
+    min: 1
+right: |
+  ###Receptor
+  é a parte que receberá informações confidenciais e de propriedade exclusiva da parte reveladora. 
+---
+code: |
+  receptor[i].name.first
+  receptor[i].address.address
+  receptor[i].complete = True
+---
+question: |
+  Dados do(a) ${ word(ordinal(i)) } receptor das informações confidenciais
+fields:
+  - "Tipo:": receptor[i].person_type
+    datatype: radio
+    choices:
+      - Pessoa Física: individual
+      - Pessoa Jurídica: organization
+  - "Nome completo:": receptor[i].name.first
+    show if: 
+      variable: receptor[i].person_type
+      is: individual
+  - "CPF:": receptor[i].cpf
+    show if: 
+      variable: receptor[i].person_type
+      is: individual
+  - "Número do RG:": receptor[i].rg
+    show if: 
+      variable: receptor[i].person_type
+      is: individual
+  - "Nacionalidade:": receptor[i].nationality
+    default: brasileiro(a)
+    show if: 
+      variable: receptor[i].person_type
+      is: individual
+  - "Estado civil:": receptor[i].marital_status
+    choices:
+      - solteiro(a): single
+      - casado(a): married
+      - divorciado(a): divorced
+      - viúvo(a): widower
+    datatype: radio
+    show if: 
+      variable: receptor[i].person_type
+      is: individual
+  - "Razão social:": receptor[i].name.first
+    show if: 
+      variable: receptor[i].person_type
+      is: organization  
+  - "CNPJ:": receptor[i].cnpj
+    show if: 
+      variable: receptor[i].person_type
+      is: organization
+script: |
+  <script type="text/javascript">
+    $(document).ready(function(){
+        $('#X2ZpZWxkXzI').mask('000.000.000-00', {reverse: true});
+        $('#X2ZpZWxkXzc').mask('00.000.000/0000-00', {reverse: true});
+      });
+  </script>
+---
+question: |
+  Endereço do(a) ${ receptor[i] }
+fields:
+  - "CEP:": receptor[i].addres_postal_code
+    required: True
+  - "Logradouro:": receptor[i].address.address
+    required: True
+  - "Número:": receptor[i].address_street_number
+    required: True
+  - "Complemento:": receptor[i].address_complement
+    required: False
+  - "Bairro:": receptor[i].address_neighborhood
+    required: True
+  - "Cidade:": receptor[i].address_city
+    required: True
+  - "Estado:": receptor[i].address_state
+    required: True
+    code: state_list
+script: |
+  <script type="text/javascript">
+    $(document).ready(function(){
+        $('#cmVjZXB0b3JbaV0uYWRkcmVzX3Bvc3RhbF9jb2Rl').mask('00000-000');
+        
+        $("#cmVjZXB0b3JbaV0uYWRkcmVzX3Bvc3RhbF9jb2Rl").focusout(function(){
+          var cep = $("#cmVjZXB0b3JbaV0uYWRkcmVzX3Bvc3RhbF9jb2Rl").val();
+          cep = cep.replace ("-","");
+          var urlStr = "https://viacep.com.br/ws/"+ cep +"/json/";
+          $.ajax({
+            url: urlStr,
+            type: "get",
+            dataType: "json",
+            success: function(data){
+              console.log(data);
+              $("#cmVjZXB0b3JbaV0uYWRkcmVzcy5hZGRyZXNz").val(data.logradouro);
+              $("#cmVjZXB0b3JbaV0uYWRkcmVzc19uZWlnaGJvcmhvb2Q").val(data.bairro);
+              $("#cmVjZXB0b3JbaV0uYWRkcmVzc19jaXR5").val(data.localidade);
+              $("#cmVjZXB0b3JbaV0uYWRkcmVzc19zdGF0ZQ").val(data.uf);
+            },
+            error: function(erro){
+              console.log(erro);
+            }
+          });
+        });
+      });
+  </script>
+---
+mandatory: True
+question: |
+  Partes Receptoras
+subquestion: |
+  % for i in receptor:
+  * ${ i }
+  % endfor
+buttons:
+  Continue: continue
+---
+objects:
+  - revealing: |
+      DAList.using(
+        object_type=Individual,
+        ask_number=True,
+        complete_attribute='complete')
+---
+section: Parte Reveladora
+progress: 30
+question: |
+  Número de reveladores das informações confidenciais
+fields:
+  - Número: revealing.target_number
+    datatype: integer
+    default: 1
+    min: 1
+right: |
+  ###Revelador
+  é a parte que fornece informações confidenciais exclusivas para a parte receptora. 
+---
+code: |
+  revealing[i].name.first
+  revealing[i].address.address
+  revealing[i].complete = True
+---
+question: |
+  Dados do(a) ${ word(ordinal(i)) } revelador das informações confidenciais
+fields:
+  - "Tipo:": revealing[i].person_type
+    datatype: radio
+    choices:
+      - Pessoa Física: individual
+      - Pessoa Jurídica: organization
+  - "Nome completo:": revealing[i].name.first
+    show if: 
+      variable: revealing[i].person_type
+      is: individual
+  - "CPF:": revealing[i].cpf
+    show if: 
+      variable: revealing[i].person_type
+      is: individual
+  - "Número do RG:": revealing[i].rg
+    show if: 
+      variable: revealing[i].person_type
+      is: individual
+  - "Nacionalidade:": revealing[i].nationality
+    default: brasileiro(a)
+    show if: 
+      variable: revealing[i].person_type
+      is: individual
+  - "Estado civil:": revealing[i].marital_status
+    choices:
+      - solteiro(a): single
+      - casado(a): married
+      - divorciado(a): divorced
+      - viúvo(a): widower
+    datatype: radio
+    show if: 
+      variable: revealing[i].person_type
+      is: individual
+  - "Razão social:": revealing[i].name.first
+    show if: 
+      variable: revealing[i].person_type
+      is: organization  
+  - "CNPJ:": revealing[i].cnpj
+    show if: 
+      variable: revealing[i].person_type
+      is: organization
+script: |
+  <script type="text/javascript">
+    $(document).ready(function(){
+        $('#X2ZpZWxkXzI').mask('000.000.000-00', {reverse: true});
+        $('#X2ZpZWxkXzc').mask('00.000.000/0000-00', {reverse: true});
+      });
+  </script>
+---
+question: |
+  Endereço do(a) ${ revealing[i] }
+fields:
+  - "CEP:": revealing[i].addres_postal_code
+    required: True
+  - "Logradouro:": revealing[i].address.address
+    required: True
+  - "Número:": revealing[i].address_street_number
+    required: True
+  - "Complemento:": revealing[i].address_complement
+    required: False
+  - "Bairro:": revealing[i].address_neighborhood
+    required: True
+  - "Cidade:": revealing[i].address_city
+    required: True
+  - "Estado:": revealing[i].address_state
+    required: True
+    code: state_list
+script: |
+  <script type="text/javascript">
+    $(document).ready(function(){
+        $('#cmV2ZWFsaW5nW2ldLmFkZHJlc19wb3N0YWxfY29kZQ').mask('00000-000');
+        
+        $("#cmV2ZWFsaW5nW2ldLmFkZHJlc19wb3N0YWxfY29kZQ").focusout(function(){
+          var cep = $("#cmV2ZWFsaW5nW2ldLmFkZHJlc19wb3N0YWxfY29kZQ").val();
+          cep = cep.replace ("-","");
+          var urlStr = "https://viacep.com.br/ws/"+ cep +"/json/";
+          $.ajax({
+            url: urlStr,
+            type: "get",
+            dataType: "json",
+            success: function(data){
+              console.log(data);
+              $("#cmV2ZWFsaW5nW2ldLmFkZHJlc3MuYWRkcmVzcw").val(data.logradouro);
+              $("#cmV2ZWFsaW5nW2ldLmFkZHJlc3NfbmVpZ2hib3Job29k").val(data.bairro);
+              $("#cmV2ZWFsaW5nW2ldLmFkZHJlc3NfY2l0eQ").val(data.localidade);
+              $("#cmV2ZWFsaW5nW2ldLmFkZHJlc3Nfc3RhdGU").val(data.uf);
+            },
+            error: function(erro){
+              console.log(erro);
+            }
+          });
+        });
+      });
+  </script>
+---
+mandatory: True
+question: |
+  Partes Reveladoras
+subquestion: |
+  % for i in revealing:
+  * ${ i }
+  % endfor
+buttons:
+  Continue: continue
+---
+code: |
+  from num2words import num2words
+  years_agreement_in_words = num2words(years_agreement, lang='pt_BR')
+---
+mandatory: True
+progress: 70
+section: Cláusulas
+question: |
+  Prazo do Acordo
+fields:
+  - "Prazo da confidencialidade:": years_agreement
+    datatype: integer
+    default: 02
+    note: ano(s)
+  - "Deseja estender o período de confiencialidade após o vencimento do contrato?": extend_agreement
+    datatype: radio
+    default: não
+    choices:
+      - Sim: sim
+      - Não: não
+  - "Tempo de extensão da confidencialidade:": extend_years_agreement
+    datatype: integer
+    default: 01
+    note: ano(s)
+    show if: 
+      variable: extend_agreement
+      is: sim
+---
+code: |
+  from num2words import num2words
+  extend_years_agreement_in_words = num2words(extend_years_agreement, lang='pt_BR')
+---
+mandatory: True
+progress: 70
+section: Cláusulas
+question: |
+  Eleição do Foro
+subquestion: |
+  As partes elegem o foro do Estado de [FIELD comarca_state], comarca [FIELD comarcas_city], como único legítimo a resolver quaisquer dúvidas erigidas deste Acordo, excluindo quaisquer outros. 
+fields:
+  - "Estado:": comarca_state
+    code: stateuf_list
+  - "Comarcas:": comarcas_city
+    datatype: text
+---
+mandatory: True
+progress: 70
+section: Assinatura
+question: |
+  Assinatura
+fields:
+  - "Local:": signature_local
+  - "Data:": signature_date
+    datatype: date
+--- 
+section: Conclusão
+progress: 100
+mandatory: True
+question: |
+  Aqui está o seu documento.
+sets: provide_user_with_document
+attachment:
+  name: Acordo de Confidencialidade - NDA
+  language: pt
+  filename: acordo-de-confidencialidade-nda
+  valid formats:
+    - pdf
+    - docx
+    - rtf
+  metadata:
+      SingleSpacing: True
+      fontsize: 10pt
+    description: A document with a **classic** message
+    content: |
+      [BOLDCENTER] ACORDO DE CONFIDENCIALIDADE
+      % for item in receptor:
+        % if item.person_type  == 'organization':
+      { item.name | upper }, pessoa jurídica de direito privado, com sede no endereço { title_case(item.address.address) }, nº { title_case(item.address_street_number) }, { title_case(item.address_neighborhood) }, na cidade de { title_case(item.address_city) }, Estado de { title_case(item.address_state) }, inscrita no CNPJ/MF sob o nº { item.cnpj }, neste ato devidamente representada por seu representante legal, doravante denominada “Parte Receptora”.
+        % elif item.person_type  == 'individual':
+      { item.name | upper }, { item.nationality | lower }, { 'item.marital_status' | lower}, inscrito(a) no CPF sob nº. { item.cpf }, portador da cédula de identidade RG nº {item.rg}, residente e domiciliado no endereço {title_case(item.address.address)}, {item.address_street_number}, % if item.address_complement: { title_case(item.address_complement) }, % endif {item.address_neighborhood}, {title_case(item.address_city)}/{item.address_state | upper}, CEP: {item.addres_postal_code}, doravante denominada “Parte Receptora”. % endif 
+      % endfor
+      % for item in revealing:
+        % if item.person_type  == 'organization':
+      { item.name | upper }, pessoa jurídica de direito privado, com sede no endereço { title_case(item.address.address) }, nº { title_case(item.address_street_number) }, { title_case(item.address_neighborhood) }, na cidade de { title_case(item.address_city) }, Estado de { title_case(item.address_state) }, inscrita no CNPJ/MF sob o nº { item.cnpj }, neste ato devidamente representada por seu representante legal, doravante denominada “Parte Reveladora”.
+        % elif item.person_type  == 'individual':
+      { item.name | upper }, { item.nationality | lower }, { 'item.marital_status' | lower}, inscrito(a) no CPF sob nº. { item.cpf } e portador da cédula de identidade RG nº { item.rg }, residente e domiciliado no endereço { title_case(item.address.address) }, { item.address_street_number }, % if item.address_complement: { title_case(item.address_complement) }, % endif { item.address_neighborhood }, { title_case(item.address_city) }/{ item.address_state | upper }, CEP: { tem.addres_postal_code }, doravante denominada “Parte Reveladora”. % endif % endfor
+      CONSIDERANDO QUE as Partes desejam iniciar a tratativa de assuntos de interesse de ambas (“Projeto Confidencial”), no curso da qual a Parte Receptora receberá informações confidenciais e de propriedade exclusiva da Parte Reveladora.
+      Resolvem as Partes celebrar este Acordo de Confidencialidade (“Acordo”), observados os seguintes termos e condições:
+      Para os fins deste Acordo:
+      “Informação” (singular ou plural) significa toda e qualquer tecnologia, informação, conhecimento ou Dados, tangíveis ou intangíveis, patenteados ou não, planejados ou em fase de desenvolvimento, que sejam fornecidos por escrito por conta das tratativas entre as partes, incluindo aquelas relacionadas às tratativas comerciais e financeiras mantidas entre as Partes e/ou qualquer de suas Afiliadas. O termo “Dados” inclui notas, projetos, desenhos, fluxogramas, informações econômico-financeiras, tais como, estruturas operacionais, custos, margens, política de preços, mercado, vendas, fornecedores, clientelas, planos, estratégias, escritos, especificações, memorandos, software de computador e outros dados similares, não revelados ao público em geral, dentre outras; e “Representante” significa os administradores e empregados das Partes e suas subsidiárias.
+      A Parte Receptora concorda e se obriga por si, por suas subsidiárias e por seus Representantes: que o presente Acordo estabelece um relacionamento de confidencialidade entre as Partes com relação às Informações, sendo que a Parte Receptora somente poderá se utilizar das Informações para os fins do Projeto Confidencial;
+      em tratar as Informações como confidenciais, e observar o mesmo cuidado que a Parte Receptora observa normalmente com relação à proteção de suas propriedades e informações confidenciais, adotando os melhores procedimentos de segurança e precauções a fim de evitar e impedir o uso indevido e não autorizado das Informações, por qualquer Representante que, por qualquer razão, tenha acesso às mesmas;
+      em restringir a divulgação das Informações aos Representantes que devam necessariamente conhecê-las, observados os propósitos acima mencionados, assegurando-se que tais Representantes estarão sempre cientes quanto à natureza confidencial e à propriedade exclusiva de tais Informações, concordando com todos os requisitos de confidencialidade aqui previstos;
+      em não revelar as Informações a qualquer terceiro sem o consentimento por escrito da Parte Reveladora, com exceção à revelação feita às subsidiárias da Parte Receptora;
+      em não reproduzir as Informações sem o expresso consentimento por escrito da Parte Reveladora, exceto aos Representantes que devam necessariamente conhecê-las para os fins do Projeto Confidencial, observando ainda o previsto no item “c” acima; e
+      a devolver ou destruir as Informações fornecidas sob a forma escrita ou física, juntamente de todas e quaisquer cópias, microfilmes, reproduções ou trabalhos derivados, em qualquer formato, tão logo a Parte Reveladora o requeira por escrito, restando claro, contudo, que a entrega das Informações à Parte Reveladora ou destruição das Informações pela Parte Receptora não eximem a Parte Receptora de sua obrigação de manter o caráter confidencial das Informações, nos termos deste Acordo.
+      A Parte Reveladora tem conhecimento de que este Acordo não se aplica às Informações que comprovadamente:
+      sejam, ao tempo de sua divulgação, ou se tornem, posteriormente, de conhecimento público, sem a violação, pela Parte Receptora, deste Acordo;
+      já eram do conhecimento da Parte Receptora no momento de sua revelação;
+      foram desenvolvidas independentemente pela Parte Receptora;
+      tenham sido legalmente recebidas pela Parte Receptora de um terceiro, sem que haja descumprimento deste Acordo;
+      cuja divulgação tenha sido autorizada por escrito pela Parte Reveladora; ou
+      cuja divulgação for exigida por autoridade governamental ou determinações legais, judiciais, arbitrais, administrativas ou normativas, que obriguem a Parte Receptora.
+      Este Acordo é celebrado nesta data e vigorará pelo prazo de {{ years_agreement }} ({{ years_agreement_in_words }}) ano(s). {% if extend_agreement == ‘sim’ %}Após o término de sua vigência, este compromisso de confidencialidade permanecerá vigente por um prazo de {{ extend_years_agreement }} ({{ extend_years_agreement_in_words }}) ano(s).{% endif %}
+      As Partes concordam que qualquer descumprimento deste Acordo pode gerar a obrigação da Parte que violou esse Acordo de pagar perdas e danos diretos.
+      A eventual tolerância de qualquer das Partes quanto ao atraso, ao não cumprimento ou ao inexato cumprimento de qualquer das disposições deste Contrato, não será interpretada ou entendida como renúncia a qualquer direito desta Parte, não prejudicará o direito de exigir o cumprimento da obrigação assumida e nem constituirá novação.
+      As Partes compreendem que nada neste Acordo obriga uma Parte de prosseguir com qualquer futura operação ou relacionamento com a outra Parte. Nenhuma operação definitiva existirá até que um contrato ou acordo definitivo seja executado de comum acordo pelos representantes devidamente autorizados de cada Parte. Nenhuma Informação trocada pelas Partes poderá ser considerada um compromisso ou um incentivo a agir ou não agir de forma determinada. Além disso, nem o presente Acordo, nem qualquer intercâmbio de Informações sob seus termos poderá ser interpretado como uma criação, transferência, concessão ou cessão de direitos, licenças ou propriedade entre as Partes. Cada uma das Partes compromete-se a informar à(s) outra(s) sobre qualquer intenção de não prosseguir com o Projeto Confidencial referido neste Acordo.
+      As Partes acordam, para todos os efeitos, que este Acordo deverá ser regido e interpretado em conformidade com as leis da República Federativa do Brasil.
+      As Partes não poderão ceder ou de qualquer forma transferir, direta ou indiretamente, os direitos e obrigações decorrentes deste Acordo sem a prévia autorização, por escrito, da outra Parte.
+      Este Acordo obriga as Partes e seus sucessores, a qualquer título.
+      Qualquer comunicação de uma Parte à outra, necessária ou exigida nos termos deste Acordo, deverá ser feita por escrito.
+      Caso qualquer disposição deste Acordo seja considerada nula, inválida ou inexequível em virtude de lei ou decisão judicial, referida disposição deverá ser cumprida na medida do possível e de forma a refletir a intenção das Partes. Nesta hipótese, a disposição nula, inválida ou inexequível não afetará as demais disposições deste Acordo, que permanecerão em pleno vigor.
+      As Partes elegem o Foro da Comarca de {{ title_case(comarcas_city) }}, do Estado de {{ comarca_state | upper }}, como único legítimo a resolver quaisquer dúvidas erigidas deste Acordo, excluindo quaisquer outros, por mais privilegiado que sejam.
+      { title_case(signature_local) }, {signature_date }.
+      Parte(s) Receptora(s):
+      % for item in receptor:
+      ____________________________________________
+      { item.name.first | upper }
+      % endfor
+
+      Parte(s) Reveladora(s):
+      % for item in revealing
+      ____________________________________________
+      { item.name.first | upper }
+      % endfor
+
+      Testemunhas:
+      1. _______________________________
+      Nome:
+      CPF:
+      2. _______________________________
+      Nome:
+      CPF:
+---
+variable name: state_list
+data:
+  - AC: AC
+  - AL: AL
+  - AM: AM
+  - AP: AP
+  - BA: BA
+  - CE: CE
+  - DF: DF
+  - ES: ES
+  - GO: GO
+  - MA: MA
+  - MT: MT
+  - MS: MS
+  - MG: MG
+  - PA: PA
+  - PB: PB
+  - PR: PR
+  - PE: PE
+  - PI: PI
+  - RJ: RJ
+  - RN: RN
+  - RS: RS
+  - RO: RO
+  - RR: RR
+  - SC: SC
+  - SP: SP
+  - SE: SE
+  - TO: TO
+---
+variable name: society_list
+data:
+  - sociedade limitada: sociedade limitada
+  - sociedade anônima: sociedade anônima
+---
+variable name: stateuf_list
+data:
+  - Acre
+  - Alagoas
+  - Amapá
+  - Amazonas
+  - Bahia
+  - Ceará
+  - Distrito Federal
+  - Espírito Santo
+  - Goiás
+  - Maranhão
+  - Mato Grosso
+  - Mato Grosso do Sul
+  - Minas Gerais
+  - Pará
+  - Paraíba
+  - Paraná
+  - Pernambuco
+  - Piauí
+  - Rio de Janeiro
+  - Rio Grande do Norte
+  - Rio Grande do Sul
+  - Rondônia
+  - Roraima
+  - Santa Catarina
+  - São Paulo
+  - Sergipe
+  - Tocantins
+---
